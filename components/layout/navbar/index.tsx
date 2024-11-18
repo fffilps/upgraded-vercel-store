@@ -11,6 +11,7 @@ const { SITE_NAME } = process.env;
 
 export async function Navbar() {
   const menu = await getMenu('main-menu');
+  console.log(menu);
 
   return (
     <div className="pb-4">
