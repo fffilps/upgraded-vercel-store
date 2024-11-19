@@ -1,3 +1,5 @@
+'use server'
+
 import { HIDDEN_PRODUCT_TAG, SHOPIFY_GRAPHQL_API_ENDPOINT, TAGS } from 'lib/constants';
 import { isShopifyError } from 'lib/type-guards';
 import { ensureStartsWith } from 'lib/utils';
@@ -10,6 +12,7 @@ import {
   editCartItemsMutation,
   removeFromCartMutation
 } from './mutations/cart';
+import { getBlogPostsQuery, getBlogsQuery } from './queries/blog';
 import { getCartQuery } from './queries/cart';
 import {
   getCollectionProductsQuery,
@@ -24,6 +27,10 @@ import {
   getProductsQuery
 } from './queries/product';
 import {
+  Blog,
+  BlogConnection,
+  BlogPost,
+  BlogsConnection,
   Cart,
   Collection,
   Connection,
@@ -343,7 +350,7 @@ export async function getCollections(): Promise<Collection[]> {
 export async function getMenu(handle: string): Promise<Menu[]> {
   const res = await shopifyFetch<ShopifyMenuOperation>({
     query: getMenuQuery,
-    // tags: [TAGS.collections],
+    tags: [TAGS.collections],
     variables: {
       handle
     }
@@ -454,4 +461,27 @@ export async function revalidate(req: NextRequest): Promise<NextResponse> {
   }
 
   return NextResponse.json({ status: 200, revalidated: true, now: Date.now() });
+}
+
+export async function getBlogs(): Promise<Blog[]> {
+  const res = await shopifyFetch<BlogsConnection>({
+    query: getBlogsQuery,
+    cache: 'force-cache',
+    // tags: [TAGS.blogs]
+  });
+
+  return res.body.data.blogs.edges.map(edge => edge.node);
+}
+
+export async function getBlogPosts(handle: string = 'news'): Promise<BlogPost[]> {
+  const res = await shopifyFetch<BlogConnection>({
+    query: getBlogPostsQuery,
+    // variables: {
+    //   handle
+    // },
+    cache: 'force-cache',
+    // tags: [TAGS.blogs]
+  });
+
+  return res.body.data.blog.articles.edges.map(edge => edge.node);
 }

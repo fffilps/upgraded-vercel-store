@@ -270,3 +270,60 @@ export type ShopifyProductsOperation = {
     sortKey?: string;
   };
 };
+
+export type BlogPost = {
+  id: string;
+  title: string;
+  handle: string;
+  publishedAt: string;
+  excerpt: string | null;
+  content: string;
+  image: {
+    url: string;
+    altText: string | null;
+    width: number;
+    height: number;
+  } | null;
+  author: {
+    name: string;
+  };
+};
+
+export type Blog = {
+  id: string;
+  handle: string;
+  title: string;
+};
+
+export type BlogsConnection = {
+  data: {
+    blogs: {
+      edges: {
+        node: Blog;
+      }[];
+    };
+  };
+};
+
+export type BlogConnection = {
+  data: {
+    blog: {
+      articles: {
+        edges: {
+          node: BlogPost;
+        }[];
+      };
+    };
+  };
+};
+
+export type ShopifyBlogPostsOperation = {
+  variables: {
+    handle: string;
+  };
+  data: {
+    blog: {
+      articles: Connection<BlogPost>;
+    };
+  };
+};
