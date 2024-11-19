@@ -1,19 +1,65 @@
 import { shopifyFetch } from 'lib/shopify';
-import { getBlogArticlesQuery } from 'lib/shopify/queries/blog';
 import Image from 'next/image';
 import Link from 'next/link';
+
+export const experimental_ppr = true
+
+interface Article {
+  id: string;
+  title: string;
+  handle: string;
+  publishedAt: string;
+  excerpt?: string;
+  content: string;
+  image?: {
+    url: string;
+    altText?: string;
+  };
+  authorV2: {
+    name: string;
+  };
+}
+
+interface ShopifyResponse {
+  body: {
+    data: {
+      articles: {
+        nodes: Article[];
+      };
+    };
+  };
+}
 
 export default async function BlogPosts() {
   
   const { body } = await shopifyFetch({
-    query: getBlogArticlesQuery,
-    variables: {
-      first: 10
+    query: `
+    {
+	articles (first: 10) {
+	 nodes {
+	   title
+    content
+    id
+    handle
+    publishedAt
+    excerpt
+    image {
+      url
+      altText
     }
-  });
+    authorV2{
+      name
+    }
+	 } 
+  }
+}
+    `,
+    // variables: {
+    //   first: 10
+    // }
+  }) as ShopifyResponse;
 
-  const articles = body.data.articles.edges.map(({ node }) => node);
-  // console.log(articles)
+  const articles: Article[] = body.data.articles.nodes;
 
   return (
     <div className="w-full py-8">
@@ -22,7 +68,17 @@ export default async function BlogPosts() {
         {articles.map((article) => (
           <Link 
             key={article.id} 
-            href={`/blogs/news/${article.handle}?id=${article.id}`}
+            href={{
+              pathname: `/blogs/news/${article.handle}`,
+              query: {
+                title: article.title,
+                content: article.content,
+                publishedAt: article.publishedAt,
+                authorName: article.authorV2.name ? article.authorV2.name : "Unknown Author",
+                imageUrl: article.image?.url,
+                imageAlt: article.image?.altText,
+              }
+            }}
             className="group"
           >
             <article className="border rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
@@ -43,7 +99,7 @@ export default async function BlogPosts() {
                   <p className="text-gray-600 mb-2">{article.excerpt}</p>
                 )}
                 <div className="flex items-center justify-between text-sm text-gray-500">
-                  <span>{article.author.name}</span>
+                  <span>{article.authorV2.name}</span>
                   <time dateTime={article.publishedAt}>
                     {new Date(article.publishedAt).toLocaleDateString()}
                   </time>
